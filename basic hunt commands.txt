@@ -1,3 +1,11 @@
+#Rencana Tampilan
+Pilih opsi:
+1. install module yang dibutuhan (sekali aja)
+2. cari subdomain
+3. tes subdomain
+4. cari direktori
+5. tes XSS
+6. ALL IN ONE
 
 #LIST INSTALL TOOLS
 sudo apt install subfinder
