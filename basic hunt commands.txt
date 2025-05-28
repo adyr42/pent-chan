@@ -1,6 +1,6 @@
 #Rencana Tampilan
 Pilih opsi:
-1. install module yang dibutuhan (sekali aja)
+1. install or module yang dibutuhan
 2. cari subdomain
 3. tes subdomain
 4. cari direktori
