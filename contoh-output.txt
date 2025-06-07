@@ -19,7 +19,8 @@ http://testaspnet.vulnweb.com
 ============================
 
 # DIRSEARCH
-./reports/BATCH-25-05-28_11-42-15/BATCH.TXT
+./reports/http_testphp.vulnweb.com/_25-06-07_12-04-17.txt # SINGLE DOMAIN SCAN
+./reports/BATCH-25-05-28_11-42-15/BATCH.TXT # BATCH FILE SCAN
 ---------------------
 # Dirsearch started Wed May 28 11:44:02 2025 as: /usr/lib/python3/dist-packages/dirsearch/dirsearch.py -l subs-active.txt -i 200
 
