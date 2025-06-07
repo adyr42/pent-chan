@@ -2,136 +2,113 @@
 
 # ==========================================
 # BugHunter – Recon & XSS Shell Automation
-# by ChatGPT & User
+# Final Version with Telegram + .env support
 # ==========================================
+echo "
+                       __                   .__                   
+ ______   ____   _____/  |_            ____ |  |__ _____    ____  
+ \____ \_/ __ \ /    \   __\  ______ _/ ___\|  |  \\__  \  /    \ 
+ |  |_> >  ___/|   |  \  |   /_____/ \  \___|   Y  \/ __ \|   |  \
+ |   __/ \___  >___|  /__|            \___  >___|  (____  /___|  /
+ |__|        \/     \/                    \/     \/     \/     \/ 
+"
 
-# Load Telegram credentials
-# if [[ -f .env ]]; then
-#   source .env
-# else
-#   echo "[!] File .env tidak ditemukan. Mohon buat dan isi TELEGRAM_BOT_TOKEN serta TELEGRAM_CHAT_ID"
-#   exit 1
-# fi
-
-# ========== Variabel Umum ==========
 subs_file="subs.txt"
 alive_file="subs-active.txt"
 xss_file="dalfoxes.txt"
 log_file="scan.log"
 results_dir="results"
+merged_params="merged-params.txt"
 mkdir -p "$results_dir"
 
-# ========== Fungsi Kirim Telegram ==========
-# send_telegram() {
-#   local msg="$1"
-#   curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
-#     -d chat_id="$TELEGRAM_CHAT_ID" -d text="$msg" > /dev/null
-# }
+# === Load .env ===
+if [[ -f .env ]]; then
+  source .env
+else
+  echo "[!] File .env tidak ditemukan. Notifikasi Telegram tidak aktif."
+fi
 
-# ========== Fungsi Install Tools ==========
+# === Kirim Telegram ===
+send_telegram() {
+  local msg="$1"
+  if [[ -n "$TELEGRAM_BOT_TOKEN" && -n "$TELEGRAM_CHAT_ID" ]]; then
+    curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+      -d chat_id="$TELEGRAM_CHAT_ID" \
+      -d text="$msg" > /dev/null
+  fi
+}
+
+# === Install Semua Tools ===
 install_tools() {
   echo "[*] Menginstal tools..." | tee -a "$log_file"
   sudo apt update
-  sudo apt install -y subfinder httpx-toolkit paramspider dirsearch sqlmap golang lynx
+  sudo apt install -y subfinder httpx-toolkit paramspider dirsearch sqlmap golang lynx python3 python3-setuptools
   go install github.com/hahwul/dalfox/v2@latest
   sudo cp ~/go/bin/dalfox /usr/bin/
   echo "[✓] Semua tools berhasil diinstal!" | tee -a "$log_file"
-  send_telegram "✅ Semua tools berhasil diinstal pada mesin Anda."
+  send_telegram "✅ Semua tools berhasil diinstal!"
 }
 
-# ========== Cari Subdomain ==========
+# === Cari Subdomain ===
 find_subdomains() {
   read -p "Masukkan domain target: " domain
-  echo "[*] Mencari subdomain untuk $domain..." | tee -a "$log_file"
   subfinder -d "$domain" -silent -o "$subs_file"
 
-  # Google Dorking (sederhana)
   lynx -dump "https://www.google.com/search?q=site:$domain" | \
-    grep -Eo "https?://[a-zA-Z0-9._-]+\.$domain" | \
-    sed 's@https\?://@@' >> "$subs_file"
+    grep -Eo "https?://[a-zA-Z0-9._-]+\.$domain" | sed 's@https\?://@@' >> "$subs_file"
 
   sort -u "$subs_file" -o "$subs_file"
   total=$(wc -l < "$subs_file")
-  echo "[✓] Subdomain ditemukan: $total" | tee -a "$log_file"
-  send_telegram "🔍 Subdomain ditemukan untuk $domain: $total"
+  send_telegram "🔍 Subdomain ditemukan: $total dari $domain"
 }
 
-# ========== Tes Subdomain ==========
+# === Cek Subdomain Aktif ===
 test_subdomains() {
-  if [[ ! -f "$subs_file" ]]; then
-    echo "[!] File $subs_file tidak ditemukan. Jalankan opsi 2 dulu." | tee -a "$log_file"
-    return
-  fi
-
-  echo "[*] Mengetes subdomain aktif (HTTP 200)..." | tee -a "$log_file"
   httpx-toolkit -l "$subs_file" -mc 200 -silent -o "$alive_file"
-  alive=$(wc -l < "$alive_file")
-  echo "[✓] Subdomain aktif: $alive" | tee -a "$log_file"
-  send_telegram "✅ Subdomain aktif: $alive (dari $(wc -l < $subs_file))"
+  total=$(wc -l < "$alive_file")
+  send_telegram "🌐 Subdomain aktif: $total"
 }
 
-# ========== Cari Direktori ==========
+# === Scan Direktori ===
 dirsearch_scan() {
-  if [[ ! -f "$alive_file" ]]; then
-    echo "[!] File $alive_file tidak ditemukan. Jalankan opsi 3 dulu." | tee -a "$log_file"
-    return
-  fi
-
-  echo "[*] Menjalankan dirsearch..." | tee -a "$log_file"
   while read -r url; do
-    echo "[+] Scanning $url" | tee -a "$log_file"
-    dirsearch -u "$url" -i 200
+    echo "[+] Dirsearch scan: $url" | tee -a "$log_file"
+    sudo dirsearch -u "$url" -i 200
   done < "$alive_file"
-  echo "[✓] Direktori selesai discan." | tee -a "$log_file"
+  send_telegram "📂 Dirsearch selesai untuk semua subdomain aktif"
 }
 
-# ========== Cari Parameter ==========
+# === Paramspider & Gabung ===
 find_params() {
-  if [[ ! -f "$alive_file" ]]; then
-    echo "[!] File $alive_file tidak ditemukan. Jalankan opsi 3 dulu." | tee -a "$log_file"
-    return
-  fi
-
-  echo "[*] Menjalankan paramspider..." | tee -a "$log_file"
-  for url in $(cat "$alive_file"); do
-    echo "[+] Paramspider scan: $url" | tee -a "$log_file"
-    paramspider -d "$url"
+  paramspider -l "$alive_file"
+  > "$merged_params"
+  for f in "$results_dir"/*.txt; do
+    [[ -f "$f" ]] && cat "$f" >> "$merged_params"
   done
-  echo "[✓] Paramspider selesai. Lihat folder results/" | tee -a "$log_file"
+  sort -u "$merged_params" -o "$merged_params"
+  total=$(wc -l < "$merged_params")
+  send_telegram "🔢 Parameter URL ditemukan: $total"
 }
 
-# ========== Tes XSS ==========
+# === Jalankan Dalfox ===
 scan_xss() {
-  if [[ ! -d "$results_dir" ]]; then
-    echo "[!] Folder results/ tidak ditemukan. Jalankan paramspider dulu (opsi 5)." | tee -a "$log_file"
-    return
-  fi
-
-  echo "[*] Menjalankan dalfox untuk semua file hasil paramspider..." | tee -a "$log_file"
   > "$xss_file"
-  for f in results/*.txt; do
-    [[ -f "$f" ]] || continue
-    echo "[+] Dalfox scanning: $f" | tee -a "$log_file"
-    dalfox file "$f" -b hahwul.xss.ht --silence >> "$xss_file"
-  done
-
+  dalfox file "$merged_params" -b hahwul.xss.ht >> "$xss_file"
   xss_count=$(grep -c 'POC:' "$xss_file")
-  echo "[✓] XSS ditemukan: $xss_count" | tee -a "$log_file"
-  send_telegram "🚨 Dalfox selesai: $xss_count POC ditemukan!"
+  send_telegram "🛡️ XSS ditemukan oleh Dalfox: $xss_count"
 }
 
-# ========== ALL IN ONE ==========
+# === All-in-One ===
 all_in_one() {
   find_subdomains
   test_subdomains
   dirsearch_scan
   find_params
   scan_xss
-  echo "[✓] ALL-IN-ONE SELESAI" | tee -a "$log_file"
-  send_telegram "✅ ALL-IN-ONE selesai untuk $(head -n1 $subs_file)"
+  send_telegram "🎉 ALL-IN-ONE selesai!"
 }
 
-# ========== Menu Utama ==========
+# === Menu Utama ===
 main_menu() {
   while true; do
     echo ""
@@ -139,7 +116,7 @@ main_menu() {
     echo "1. Install semua tools"
     echo "2. Cari subdomain"
     echo "3. Tes subdomain aktif"
-    echo "4. Cari direktori (dirsearch)"
+    echo "4. Scan direktori (dirsearch)"
     echo "5. Cari parameter & XSS"
     echo "6. ALL IN ONE"
     echo "7. Keluar"
@@ -159,4 +136,5 @@ main_menu() {
   done
 }
 
+# Jalankan menu
 main_menu
