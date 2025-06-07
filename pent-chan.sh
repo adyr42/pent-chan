@@ -9,6 +9,7 @@ echo "
  ______   ____   _____/  |_            ____ |  |__ _____    ____  
  \____ \_/ __ \ /    \   __\  ______ _/ ___\|  |  \\__  \  /    \ 
  |  |_> >  ___/|   |  \  |   /_____/ \  \___|   Y  \/ __ \|   |  \
+ 
  |   __/ \___  >___|  /__|            \___  >___|  (____  /___|  /
  |__|        \/     \/                    \/     \/     \/     \/ 
 "
@@ -98,6 +99,48 @@ scan_xss() {
   send_telegram "🛡️ XSS ditemukan oleh Dalfox: $xss_count"
 }
 
+combine_and_send_results() {
+  local final_output="final-report.txt"
+  local domain=$(head -n 1 "$subs_file" | cut -d'.' -f2-)  # contoh: www.vulnweb.com → vulnweb.com
+  local datetime=$(date '+%Y-%m-%d %H:%M:%S')
+
+  echo "===== 🔐 BugHunter Scan Report =====" > "$final_output"
+  echo "Target   : $domain" >> "$final_output"
+  echo "Waktu    : $datetime" >> "$final_output"
+  echo "======================================" >> "$final_output"
+  echo "" >> "$final_output"
+
+  echo "===== 🧪 XSS Report =====" >> "$final_output"
+  if [[ -s "$xss_file" ]]; then
+    head -n 50 "$xss_file" >> "$final_output"
+  else
+    echo "(tidak ada hasil dari dalfox)" >> "$final_output"
+  fi
+  echo "" >> "$final_output"
+
+  echo "===== 📂 Dirsearch Manual (tidak otomatis tersimpan) =====" >> "$final_output"
+  echo "Silakan salin output terminal dari dirsearch atau gabungkan log dirsearch-*.txt jika tersedia." >> "$final_output"
+  echo "" >> "$final_output"
+
+  echo "===== 🔍 Parameter URLs =====" >> "$final_output"
+  if [[ -s "$merged_params" ]]; then
+    head -n 50 "$merged_params" >> "$final_output"
+  else
+    echo "(tidak ada hasil parameter dari paramspider)" >> "$final_output"
+  fi
+
+  # Kirim file via Telegram
+  if [[ -n "$TELEGRAM_BOT_TOKEN" && -n "$TELEGRAM_CHAT_ID" ]]; then
+    curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendDocument" \
+      -F chat_id="$TELEGRAM_CHAT_ID" \
+      -F document=@"$final_output" \
+      -F caption="📄 Laporan gabungan selesai dikompilasi!"
+  else
+    echo "[!] Token atau Chat ID Telegram tidak tersedia."
+  fi
+}
+
+
 # === All-in-One ===
 all_in_one() {
   find_subdomains
@@ -105,7 +148,8 @@ all_in_one() {
   dirsearch_scan
   find_params
   scan_xss
-  send_telegram "🎉 ALL-IN-ONE selesai!"
+  combine_and_send_results
+  send_telegram "🎉 ALL-IN-ONE selesai dan laporan sudah dikirim!"
 }
 
 # === Menu Utama ===
@@ -118,10 +162,11 @@ main_menu() {
     echo "3. Tes subdomain aktif"
     echo "4. Scan direktori (dirsearch)"
     echo "5. Cari parameter & XSS"
-    echo "6. ALL IN ONE"
-    echo "7. Keluar"
+    echo "6. Gabungkan dan kirim laporan"
+    echo "7. ALL IN ONE"
+    echo "8. Keluar"
     echo "==============================="
-    read -p "Pilih opsi [1-7]: " opsi
+    read -p "Pilih opsi [1-8]: " opsi
 
     case $opsi in
       1) install_tools ;;
@@ -129,8 +174,9 @@ main_menu() {
       3) test_subdomains ;;
       4) dirsearch_scan ;;
       5) find_params; scan_xss ;;
-      6) all_in_one ;;
-      7) echo "[!] Keluar..."; exit 0 ;;
+      6) combine_and_send_results ;;
+      7) all_in_one ;;
+      8) echo "[!] Keluar..."; exit 0 ;;
       *) echo "[!] Pilihan tidak valid." ;;
     esac
   done
